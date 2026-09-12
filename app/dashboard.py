@@ -6,6 +6,8 @@ Clean, Modern & Professional Astronomical Data Platform
 
 import sys
 import os
+import io
+import wave
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -115,6 +117,68 @@ def load_trained_model():
             return build_1d_cnn()
     else:
         return build_1d_cnn()
+
+
+def generate_transit_audio(flux, duration_sec=3.0, sample_rate=22050):
+    """Synthesizes light curve flux into audio waveform (Sonification)."""
+    norm_flux = (flux - np.min(flux)) / (np.max(flux) - np.min(flux) + 1e-8)
+    resampled = np.interp(np.linspace(0, 1, int(sample_rate * duration_sec)), np.linspace(0, 1, len(norm_flux)), norm_flux)
+    
+    freqs = 150 + 200 * resampled
+    t = np.linspace(0, duration_sec, int(sample_rate * duration_sec))
+    phase = 2 * np.pi * np.cumsum(freqs) / sample_rate
+    audio_signal = 0.5 * np.sin(phase)
+    
+    buf = io.BytesIO()
+    with wave.open(buf, 'wb') as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(sample_rate)
+        int_data = (audio_signal * 32767).astype(np.int16)
+        wav_file.writeframes(int_data.tobytes())
+    return buf.getvalue()
+
+
+def create_3d_orbit_figure(r_earth, period_steps):
+    """Renders a 3D orbital trajectory simulation of the candidate planet around its star."""
+    u = np.linspace(0, 2 * np.pi, 20)
+    v = np.linspace(0, np.pi, 20)
+    x_star = 0.4 * np.outer(np.cos(u), np.sin(v))
+    y_star = 0.4 * np.outer(np.sin(u), np.sin(v))
+    z_star = 0.4 * np.outer(np.ones(np.size(u)), np.cos(v))
+
+    theta = np.linspace(0, 2 * np.pi, 100)
+    r_orbit = 1.8
+    x_orbit = r_orbit * np.cos(theta)
+    y_orbit = r_orbit * np.sin(theta)
+    z_orbit = np.zeros_like(theta)
+
+    planet_idx = 25
+    x_p = x_orbit[planet_idx]
+    y_p = y_orbit[planet_idx]
+    z_p = z_orbit[planet_idx]
+
+    p_size = max(6, min(24, int(r_earth * 1.5)))
+
+    fig3d = go.Figure()
+    fig3d.add_trace(go.Surface(x=x_star, y=y_star, z=z_star, colorscale='YlOrRd', showscale=False, name="Host Star"))
+    fig3d.add_trace(go.Scatter3d(x=x_orbit, y=y_orbit, z=z_orbit, mode='lines',
+                                 line=dict(color='#58a6ff', width=4), name="Orbital Path"))
+    fig3d.add_trace(go.Scatter3d(x=[x_p], y=[y_p], z=[z_p], mode='markers',
+                                 marker=dict(color='#3fb950', size=p_size, symbol='circle'), name="Candidate Planet"))
+
+    fig3d.update_layout(
+        scene=dict(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            zaxis=dict(visible=False),
+            bgcolor='#0d1117'
+        ),
+        margin=dict(l=0, r=0, t=0, b=0),
+        height=380,
+        paper_bgcolor='#0d1117'
+    )
+    return fig3d
 
 
 model = load_trained_model()
@@ -238,10 +302,11 @@ with c4:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Main Navigation Tabs
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Light Curve & Grad-CAM Analysis",
+    "🛸 3D Orbit Simulation & Parameters",
     "🔄 Phase Folding & BLS Periodogram",
-    "🌌 Dual View Representation (Global vs Local)",
+    "🔊 Light Curve Audio Sonification",
     "🧠 Model Metrics & Architecture"
 ])
 
@@ -252,17 +317,14 @@ with tab1:
                         subplot_titles=("Stellar Brightness Time Series (Normalized Flux)",
                                         "1D Grad-CAM Neural Attention Map (Transit Dip Importance)"))
 
-    # Light curve trace
     fig.add_trace(go.Scatter(y=raw_flux, mode='lines', name='Raw Flux', line=dict(color='#484f58', width=1)), row=1, col=1)
     fig.add_trace(go.Scatter(y=flux_proc, mode='lines', name='Smoothed Flux', line=dict(color='#58a6ff', width=1.8)), row=1, col=1)
 
-    # Highlight detected transit dip regions
     dip_indices = np.where(gradcam_heatmap > 0.55)[0]
     if len(dip_indices) > 0 and is_planet:
         fig.add_trace(go.Scatter(x=dip_indices, y=flux_proc[dip_indices], mode='markers',
                                  name='Detected Transit Signal', marker=dict(color='#f85149', size=5, symbol='circle')), row=1, col=1)
 
-    # Grad-CAM Heatmap trace
     fig.add_trace(go.Scatter(y=gradcam_heatmap, mode='lines', name='Grad-CAM Attention',
                              line=dict(color='#d29922', width=2), fill='tozeroy', fillcolor='rgba(210, 153, 34, 0.2)'), row=2, col=1)
 
@@ -280,6 +342,30 @@ with tab1:
     st.plotly_chart(fig, use_container_width=True)
 
 with tab2:
+    st.subheader("🛸 3D Orbital Trajectory & Planetary Parameters")
+    
+    col_3d, col_info = st.columns([3, 2])
+    
+    with col_3d:
+        fig3d = create_3d_orbit_figure(radius_analysis['planet_radius_earth'], bls_analysis['best_period'])
+        st.plotly_chart(fig3d, use_container_width=True)
+
+    with col_info:
+        st.markdown(f"""
+        <div class="metric-box" style="height: 380px;">
+            <div class="metric-title">Astrophysical Parameter Summary</div>
+            <hr style="border-color: #30363d;">
+            <p><strong>Candidate Classification:</strong> <span style="color: #3fb950;">{radius_analysis['classification']}</span></p>
+            <p><strong>Planet Radius (R<sub>⊕</sub>):</strong> {radius_analysis['planet_radius_earth']} Earth Radii</p>
+            <p><strong>Planet Radius (R<sub>Jup</sub>):</strong> {radius_analysis['planet_radius_jupiter']} Jupiter Radii</p>
+            <p><strong>Transit Dip Depth:</strong> {radius_analysis['depth_percent']}%</p>
+            <p><strong>Estimated Period:</strong> {bls_analysis['best_period']:.1f} timesteps (~{period_days:.1f} days)</p>
+            <p><strong>Semi-Major Axis:</strong> {semi_major_axis_au:.3f} AU</p>
+            <p><strong>Equilibrium Temp:</strong> {eq_temp_k} K ({eq_temp_k - 273} °C)</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+with tab3:
     st.subheader("Box-Fitting Least Squares (BLS) & Phase Folding")
     st.markdown("Phase folding wraps time series data across the orbital period ($P$) to align periodic transit dips.")
 
@@ -303,26 +389,14 @@ with tab2:
     )
     st.plotly_chart(fig_phase, use_container_width=True)
 
-with tab3:
-    st.subheader("NASA / Google AI Dual View Representation")
-    st.markdown("Global view provides full temporal context, while the local view zooms in on candidate transit dips.")
-
-    global_v, local_v = extract_local_global_views(flux_proc, local_window_size=201)
-
-    col_g, col_l = st.columns(2)
-    with col_g:
-        fig_g = go.Figure()
-        fig_g.add_trace(go.Scatter(y=global_v, mode='lines', line=dict(color='#58a6ff', width=1.5)))
-        fig_g.update_layout(title="Global Light Curve View (3197 points)", paper_bgcolor='#0d1117', plot_bgcolor='#161b22', font=dict(color='#c9d1d9'), height=340)
-        st.plotly_chart(fig_g, use_container_width=True)
-
-    with col_l:
-        fig_l = go.Figure()
-        fig_l.add_trace(go.Scatter(y=local_v, mode='lines', line=dict(color='#3fb950', width=2)))
-        fig_l.update_layout(title="Local Zoomed Transit Window (201 points)", paper_bgcolor='#0d1117', plot_bgcolor='#161b22', font=dict(color='#c9d1d9'), height=340)
-        st.plotly_chart(fig_l, use_container_width=True)
-
 with tab4:
+    st.subheader("🔊 Light Curve Audio Sonification")
+    st.markdown("Sonification maps stellar flux variations into audio frequencies. Listen for pitch drops during planet transits!")
+    
+    audio_bytes = generate_transit_audio(flux_proc)
+    st.audio(audio_bytes, format='audio/wav')
+
+with tab5:
     st.subheader("Model Performance & Architecture Summary")
     
     col_a, col_b = st.columns(2)
