@@ -1,4 +1,4 @@
-tensorflow-cpu
+tensorflow
 scikit-learn
 imbalanced-learn
 scipy
