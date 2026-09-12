@@ -6,8 +6,6 @@ Clean, Modern & Professional Astronomical Data Platform
 
 import sys
 import os
-import io
-import wave
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -40,7 +38,6 @@ st.html("""<style>
     color: #c9d1d9;
 }
 
-/* Header Typography */
 .app-header {
     font-size: 2.0rem;
     font-weight: 700;
@@ -54,7 +51,6 @@ st.html("""<style>
     margin-bottom: 20px;
 }
 
-/* Clean Professional Metric Cards */
 .metric-box {
     background-color: #161b22;
     border: 1px solid #30363d;
@@ -82,7 +78,6 @@ st.html("""<style>
     margin-top: 4px;
 }
 
-/* Status Badges */
 .badge-planet {
     background-color: rgba(46, 160, 67, 0.15);
     border: 1px solid #2ea043;
@@ -119,60 +114,64 @@ def load_trained_model():
         return build_1d_cnn()
 
 
-def generate_transit_audio(flux, duration_sec=3.0, sample_rate=22050):
-    """Synthesizes light curve flux into audio waveform (Sonification)."""
-    norm_flux = (flux - np.min(flux)) / (np.max(flux) - np.min(flux) + 1e-8)
-    resampled = np.interp(np.linspace(0, 1, int(sample_rate * duration_sec)), np.linspace(0, 1, len(norm_flux)), norm_flux)
-    
-    freqs = 150 + 200 * resampled
-    t = np.linspace(0, duration_sec, int(sample_rate * duration_sec))
-    phase = 2 * np.pi * np.cumsum(freqs) / sample_rate
-    audio_signal = 0.5 * np.sin(phase)
-    
-    buf = io.BytesIO()
-    with wave.open(buf, 'wb') as wav_file:
-        wav_file.setnchannels(1)
-        wav_file.setsampwidth(2)
-        wav_file.setframerate(sample_rate)
-        int_data = (audio_signal * 32767).astype(np.int16)
-        wav_file.writeframes(int_data.tobytes())
-    return buf.getvalue()
-
-
 def create_3d_orbit_figure(r_earth, period_steps):
-    """Renders a 3D orbital trajectory simulation of the candidate planet around its star."""
-    u = np.linspace(0, 2 * np.pi, 20)
-    v = np.linspace(0, np.pi, 20)
-    x_star = 0.4 * np.outer(np.cos(u), np.sin(v))
-    y_star = 0.4 * np.outer(np.sin(u), np.sin(v))
-    z_star = 0.4 * np.outer(np.ones(np.size(u)), np.cos(v))
+    """Renders a 3D spherical host star and smooth orbital path for the candidate exoplanet."""
+    # Proper 3D Sphere geometry (u: longitude [0, 2pi], v: latitude [0, pi])
+    u = np.linspace(0, 2 * np.pi, 30)
+    v = np.linspace(0, np.pi, 30)
+    r_star = 0.55
+    x_star = r_star * np.outer(np.cos(u), np.sin(v))
+    y_star = r_star * np.outer(np.sin(u), np.sin(v))
+    z_star = r_star * np.outer(np.ones_like(u), np.cos(v))
 
-    theta = np.linspace(0, 2 * np.pi, 100)
-    r_orbit = 1.8
+    # Orbital Ring
+    theta = np.linspace(0, 2 * np.pi, 120)
+    r_orbit = 1.6
     x_orbit = r_orbit * np.cos(theta)
     y_orbit = r_orbit * np.sin(theta)
     z_orbit = np.zeros_like(theta)
 
-    planet_idx = 25
+    # Position planet on orbit
+    planet_idx = 28
     x_p = x_orbit[planet_idx]
     y_p = y_orbit[planet_idx]
     z_p = z_orbit[planet_idx]
 
-    p_size = max(6, min(24, int(r_earth * 1.5)))
+    p_size = max(8, min(22, int(r_earth * 1.2)))
 
     fig3d = go.Figure()
-    fig3d.add_trace(go.Surface(x=x_star, y=y_star, z=z_star, colorscale='YlOrRd', showscale=False, name="Host Star"))
-    fig3d.add_trace(go.Scatter3d(x=x_orbit, y=y_orbit, z=z_orbit, mode='lines',
-                                 line=dict(color='#58a6ff', width=4), name="Orbital Path"))
-    fig3d.add_trace(go.Scatter3d(x=[x_p], y=[y_p], z=[z_p], mode='markers',
-                                 marker=dict(color='#3fb950', size=p_size, symbol='circle'), name="Candidate Planet"))
+    
+    # 3D Host Star (Glowing Sphere)
+    fig3d.add_trace(go.Surface(
+        x=x_star, y=y_star, z=z_star,
+        colorscale='YlOrRd', showscale=False,
+        hoverinfo='none', name="Host Star"
+    ))
+    
+    # 3D Orbit Track
+    fig3d.add_trace(go.Scatter3d(
+        x=x_orbit, y=y_orbit, z=z_orbit,
+        mode='lines', line=dict(color='#58a6ff', width=5),
+        hoverinfo='none', name="Orbital Path"
+    ))
+    
+    # Candidate Planet Sphere
+    fig3d.add_trace(go.Scatter3d(
+        x=[x_p], y=[y_p], z=[z_p],
+        mode='markers',
+        marker=dict(color='#3fb950', size=p_size, symbol='circle'),
+        hoverinfo='text', text=f"Candidate Exoplanet ({r_earth} R_earth)",
+        name="Candidate Planet"
+    ))
 
     fig3d.update_layout(
         scene=dict(
             xaxis=dict(visible=False),
             yaxis=dict(visible=False),
             zaxis=dict(visible=False),
-            bgcolor='#0d1117'
+            aspectmode='data',
+            bgcolor='#0d1117',
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.2))
         ),
         margin=dict(l=0, r=0, t=0, b=0),
         height=380,
@@ -302,12 +301,11 @@ with c4:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Main Navigation Tabs
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "📊 Light Curve & Grad-CAM Analysis",
     "🛸 3D Orbit Simulation & Parameters",
     "🔄 Phase Folding & BLS Periodogram",
-    "🔊 Light Curve Audio Sonification",
-    "🧠 Model Metrics & Architecture"
+    "🧠 Model Performance & Architecture"
 ])
 
 with tab1:
@@ -354,11 +352,11 @@ with tab2:
         st.markdown(f"""
         <div class="metric-box" style="height: 380px;">
             <div class="metric-title">Astrophysical Parameter Summary</div>
-            <hr style="border-color: #30363d;">
+            <hr style="border-color: #30363d; margin: 8px 0 16px 0;">
             <p><strong>Candidate Classification:</strong> <span style="color: #3fb950;">{radius_analysis['classification']}</span></p>
             <p><strong>Planet Radius (R<sub>⊕</sub>):</strong> {radius_analysis['planet_radius_earth']} Earth Radii</p>
             <p><strong>Planet Radius (R<sub>Jup</sub>):</strong> {radius_analysis['planet_radius_jupiter']} Jupiter Radii</p>
-            <p><strong>Transit Dip Depth:</strong> {radius_analysis['depth_percent']}%</p>
+            <p><strong>Relative Transit Depth:</strong> {radius_analysis['depth_percent']}%</p>
             <p><strong>Estimated Period:</strong> {bls_analysis['best_period']:.1f} timesteps (~{period_days:.1f} days)</p>
             <p><strong>Semi-Major Axis:</strong> {semi_major_axis_au:.3f} AU</p>
             <p><strong>Equilibrium Temp:</strong> {eq_temp_k} K ({eq_temp_k - 273} °C)</p>
@@ -390,13 +388,6 @@ with tab3:
     st.plotly_chart(fig_phase, use_container_width=True)
 
 with tab4:
-    st.subheader("🔊 Light Curve Audio Sonification")
-    st.markdown("Sonification maps stellar flux variations into audio frequencies. Listen for pitch drops during planet transits!")
-    
-    audio_bytes = generate_transit_audio(flux_proc)
-    st.audio(audio_bytes, format='audio/wav')
-
-with tab5:
     st.subheader("Model Performance & Architecture Summary")
     
     col_a, col_b = st.columns(2)
