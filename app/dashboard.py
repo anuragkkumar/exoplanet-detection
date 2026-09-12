@@ -8,7 +8,6 @@ import sys
 import os
 import io
 import wave
-import struct
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -33,108 +32,78 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Futuristic Sci-Fi Glassmorphism Styling
-st.markdown("""
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-    /* Dark Space Background */
-    .stApp {
-        background: radial-gradient(circle at 50% 10%, #0f172a 0%, #020617 80%);
-        font-family: 'Inter', sans-serif;
-        color: #e2e8f0;
-    }
-    
-    /* Glowing Title */
-    .command-title {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2.2rem;
-        font-weight: 900;
-        letter-spacing: 2px;
-        background: linear-gradient(90deg, #00f3ff 0%, #3b82f6 50%, #9d4edd 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
-        margin-bottom: 0px;
-    }
-
-    .sub-badge {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 0.75rem;
-        letter-spacing: 3px;
-        color: #38bdf8;
-        background: rgba(14, 165, 233, 0.1);
-        border: 1px solid rgba(56, 189, 248, 0.3);
-        padding: 4px 10px;
-        border-radius: 4px;
-        display: inline-block;
-        margin-bottom: 15px;
-    }
-
-    /* Glassmorphism Metric Cards */
-    .sci-card {
-        background: rgba(15, 23, 42, 0.65);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(56, 189, 248, 0.2);
-        border-radius: 12px;
-        padding: 18px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        transition: transform 0.2s ease, border 0.2s ease;
-    }
-    
-    .sci-card:hover {
-        border-color: rgba(0, 243, 255, 0.5);
-        transform: translateY(-2px);
-    }
-    
-    .sci-card-label {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 0.7rem;
-        color: #94a3b8;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-    }
-    
-    .sci-card-val {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: #f8fafc;
-        margin: 6px 0;
-    }
-    
-    .sci-card-status-planet {
-        color: #00f3ff;
-        text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
-    }
-
-    /* Glowing Planet Badge */
-    .glow-badge-planet {
-        background: linear-gradient(135deg, rgba(0, 243, 255, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%);
-        border: 1px solid #00f3ff;
-        color: #00f3ff;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-family: 'Orbitron', sans-serif;
-        font-weight: 700;
-        font-size: 0.85rem;
-        letter-spacing: 1px;
-        box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
-        display: inline-block;
-    }
-    
-    .glow-badge-noplanet {
-        background: rgba(100, 116, 139, 0.2);
-        border: 1px solid #64748b;
-        color: #94a3b8;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 0.85rem;
-        display: inline-block;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# Use st.html for clean CSS injection without markdown text leakage
+st.html("""<style>
+.stApp {
+    background: radial-gradient(circle at 50% 10%, #0f172a 0%, #020617 80%);
+    font-family: 'Inter', sans-serif;
+    color: #e2e8f0;
+}
+.command-title {
+    font-family: sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, #00f3ff 0%, #3b82f6 50%, #9d4edd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0px;
+}
+.sub-badge {
+    font-family: sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    color: #38bdf8;
+    background: rgba(14, 165, 233, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+.sci-card {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+.sci-card-label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+.sci-card-val {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #f8fafc;
+    margin: 6px 0;
+}
+.sci-card-status-planet {
+    color: #00f3ff;
+}
+.glow-badge-planet {
+    background: linear-gradient(135deg, rgba(0, 243, 255, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%);
+    border: 1px solid #00f3ff;
+    color: #00f3ff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    display: inline-block;
+}
+.glow-badge-noplanet {
+    background: rgba(100, 116, 139, 0.2);
+    border: 1px solid #64748b;
+    color: #94a3b8;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    display: inline-block;
+}
+</style>""")
 
 
 @st.cache_resource
@@ -155,13 +124,11 @@ def generate_transit_audio(flux, duration_sec=3.0, sample_rate=22050):
     norm_flux = (flux - np.min(flux)) / (np.max(flux) - np.min(flux) + 1e-8)
     resampled = np.interp(np.linspace(0, 1, int(sample_rate * duration_sec)), np.linspace(0, 1, len(norm_flux)), norm_flux)
     
-    # Map flux dips to pitch drop (300Hz base to 150Hz dip)
     freqs = 150 + 200 * resampled
     t = np.linspace(0, duration_sec, int(sample_rate * duration_sec))
     phase = 2 * np.pi * np.cumsum(freqs) / sample_rate
     audio_signal = 0.5 * np.sin(phase)
     
-    # Convert to WAV bytes
     buf = io.BytesIO()
     with wave.open(buf, 'wb') as wav_file:
         wav_file.setnchannels(1)
@@ -174,21 +141,18 @@ def generate_transit_audio(flux, duration_sec=3.0, sample_rate=22050):
 
 def create_3d_orbit_figure(r_earth, period_steps):
     """Renders a 3D orbital trajectory simulation of the candidate planet around its star."""
-    # Star 3D Sphere
     u = np.linspace(0, 2 * np.pi, 20)
     v = np.linspace(0, np.pi, 20)
     x_star = 0.4 * np.outer(np.cos(u), np.sin(v))
     y_star = 0.4 * np.outer(np.sin(u), np.sin(v))
     z_star = 0.4 * np.outer(np.ones(np.size(u)), np.cos(v))
 
-    # Orbital Ring
     theta = np.linspace(0, 2 * np.pi, 100)
     r_orbit = 1.8
     x_orbit = r_orbit * np.cos(theta)
     y_orbit = r_orbit * np.sin(theta)
     z_orbit = np.zeros_like(theta)
 
-    # Planet Position on Orbit
     planet_idx = 25
     x_p = x_orbit[planet_idx]
     y_p = y_orbit[planet_idx]
@@ -197,15 +161,9 @@ def create_3d_orbit_figure(r_earth, period_steps):
     p_size = max(6, min(24, int(r_earth * 1.5)))
 
     fig3d = go.Figure()
-    
-    # Add Host Star Surface
     fig3d.add_trace(go.Surface(x=x_star, y=y_star, z=z_star, colorscale='YlOrRd', showscale=False, name="Host Star"))
-    
-    # Add Orbit Trajectory
     fig3d.add_trace(go.Scatter3d(x=x_orbit, y=y_orbit, z=z_orbit, mode='lines',
                                  line=dict(color='#00f3ff', width=4), name="Orbital Path"))
-    
-    # Add Candidate Planet
     fig3d.add_trace(go.Scatter3d(x=[x_p], y=[y_p], z=[z_p], mode='markers',
                                  marker=dict(color='#10b981', size=p_size, symbol='circle'), name="Candidate Planet"))
 
@@ -295,8 +253,7 @@ time_steps = np.arange(len(flux_proc))
 bls_analysis = find_bls_period(time_steps, flux_proc)
 radius_analysis = estimate_planet_radius(bls_analysis["transit_depth"], stellar_radius_solar=stellar_radius)
 
-# Kepler's 3rd Law Orbital Distance Estimate (AU)
-period_days = bls_analysis["best_period"] * 0.0204  # ~30 min per timestep in Kepler data
+period_days = bls_analysis["best_period"] * 0.0204
 semi_major_axis_au = ((period_days / 365.25)**2 * stellar_radius)**(1/3)
 eq_temp_k = int(278 * (stellar_radius**0.5) / (semi_major_axis_au**0.5)) if semi_major_axis_au > 0 else 300
 
@@ -356,22 +313,18 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 with tab1:
     st.markdown(f"#### 🛰️ Target Telemetry: **{target_name}**")
     
-    # Sci-Fi Styled Dual Plotly Subplot
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08,
                         subplot_titles=("Normalized Stellar Flux & Transit Dips",
                                         "1D Grad-CAM Neural Attention Heatmap (Transit Dip Importance)"))
 
-    # Raw & Processed Light Curve
     fig.add_trace(go.Scatter(y=raw_flux, mode='lines', name='Raw Flux', line=dict(color='rgba(148, 163, 184, 0.3)', width=1)), row=1, col=1)
     fig.add_trace(go.Scatter(y=flux_proc, mode='lines', name='Smoothed Flux', line=dict(color='#00f3ff', width=2)), row=1, col=1)
 
-    # Highlight detected transit dips
     dip_indices = np.where(gradcam_heatmap > 0.55)[0]
     if len(dip_indices) > 0 and is_planet:
         fig.add_trace(go.Scatter(x=dip_indices, y=flux_proc[dip_indices], mode='markers',
                                  name='Transit Dip Signal', marker=dict(color='#ef4444', size=6, symbol='diamond')), row=1, col=1)
 
-    # Grad-CAM Attention Heatmap
     fig.add_trace(go.Scatter(y=gradcam_heatmap, mode='lines', name='Grad-CAM Attention',
                              line=dict(color='#f59e0b', width=2.5), fill='tozeroy', fillcolor='rgba(245, 158, 11, 0.25)'), row=2, col=1)
 
@@ -379,7 +332,7 @@ with tab1:
         height=560,
         paper_bgcolor='#020617',
         plot_bgcolor='#090d16',
-        font=dict(color='#e2e8f0', family="Orbitron"),
+        font=dict(color='#e2e8f0'),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     fig.update_xaxes(title_text="Timesteps (Observations)", gridcolor='#1e293b', row=2, col=1)
@@ -422,7 +375,6 @@ with tab3:
     fig_phase.add_trace(go.Scatter(x=phase, y=folded_flux, mode='markers',
                                   marker=dict(color='#00f3ff', size=3.5, opacity=0.5), name='Phase Folded Points'))
     
-    # Binned Average Profile
     phase_bin = np.linspace(-0.5, 0.5, 60)
     binned_flux = [np.mean(folded_flux[(phase >= b) & (phase < b + 0.016)]) for b in phase_bin]
     fig_phase.add_trace(go.Scatter(x=phase_bin, y=binned_flux, mode='lines',
