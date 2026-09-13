@@ -11,6 +11,7 @@ import wave
 import numpy as np
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -254,16 +255,20 @@ def create_clean_confidence_gauge(prob_percent, threshold):
 model = load_trained_model()
 
 # Header Banner
-st.markdown('<div class="header-title">🪐 Exoplanet Transit Detection Engine</div>', unsafe_allow_html=True)
-st.markdown('<div class="header-sub">Deep Learning Signal Analysis for NASA Kepler & TESS Photometric Datasets</div>', unsafe_allow_html=True)
-st.markdown("""
-<div class="header-badges">
-    <span class="badge-tag">ISRO BAH 2026</span>
-    <span class="badge-tag">NASA Kepler</span>
-    <span class="badge-tag">TESS Mission</span>
-    <span class="badge-tag">1D-ResNet & XAI</span>
-</div>
-""", unsafe_allow_html=True)
+hdr_left, hdr_right = st.columns([4, 1])
+with hdr_left:
+    st.markdown('<div class="header-title">🪐 Exoplanet Transit Detection Engine</div>', unsafe_allow_html=True)
+    st.markdown('<div class="header-sub">Deep Learning Signal Analysis for NASA Kepler &amp; TESS Photometric Datasets</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="header-badges">
+        <span class="badge-tag">ISRO BAH 2026</span>
+        <span class="badge-tag">NASA Kepler</span>
+        <span class="badge-tag">TESS Mission</span>
+        <span class="badge-tag">1D-ResNet &amp; XAI</span>
+    </div>
+    """, unsafe_allow_html=True)
+with hdr_right:
+    show_solar_system = st.button("🌌 See Your Planet", use_container_width=True)
 
 # Sidebar Controls
 st.sidebar.markdown("### Settings & Controls")
@@ -338,6 +343,93 @@ esi_score = max(0.1, min(0.98, float(1.0 - 0.4 * abs(radius_analysis['planet_rad
 
 # 1D Grad-CAM Explainability Heatmap
 _, gradcam_heatmap = compute_gradcam1d(model, flux_proc)
+
+# Solar System Viewer (triggered by header button)
+if show_solar_system:
+    st.markdown("---")
+    st.markdown("### 🌌 Locate Your Detected Planet in the Solar System")
+
+    ss_col1, ss_col2 = st.columns([3, 1])
+
+    with ss_col1:
+        st.components.v1.iframe(
+            "https://dasdfdsfasdfs-interactive-3d-solar-system.static.hf.space",
+            height=520,
+            scrolling=False
+        )
+
+    with ss_col2:
+        # Compare detected planet distance to known solar system planets
+        solar_planets = [
+            ("Mercury", 0.39),
+            ("Venus", 0.72),
+            ("🌍 Earth — You Are Here", 1.00),
+            ("Mars", 1.52),
+            ("Jupiter", 5.20),
+            ("Saturn", 9.58),
+            ("Uranus", 19.18),
+            ("Neptune", 30.07),
+        ]
+
+        st.markdown(f"""
+        <div class="clean-card">
+            <div class="card-title">YOUR PLANET'S LOCATION</div>
+            <hr style="border-color: #1e293b; margin: 8px 0 12px 0;">
+            <div style="font-size: 1.4rem; font-weight: 700; color: #38bdf8; margin-bottom: 4px;">
+                {semi_major_axis_au:.2f} AU from Host Star
+            </div>
+            <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 16px;">
+                (~{semi_major_axis_au * 149.6:.1f} million km)
+            </div>
+            <div class="card-title" style="margin-top: 12px;">DISTANCE COMPARISON</div>
+            <hr style="border-color: #1e293b; margin: 8px 0 12px 0;">
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Find where the detected planet fits
+        closest_planet = min(solar_planets, key=lambda p: abs(p[1] - semi_major_axis_au))
+
+        for name, dist in solar_planets:
+            is_earth = "Earth" in name
+            is_closest = name == closest_planet[0]
+
+            if is_earth:
+                color = "#34d399"
+                icon = "🌍"
+                weight = "700"
+            elif is_closest and not is_earth:
+                color = "#fbbf24"
+                icon = "📍"
+                weight = "600"
+            else:
+                color = "#64748b"
+                icon = "○"
+                weight = "400"
+
+            st.markdown(f"""
+            <div style="display: flex; justify-content: space-between; padding: 4px 8px; font-size: 0.8rem;
+                        color: {color}; font-weight: {weight};
+                        {'background: rgba(52, 211, 153, 0.08); border-radius: 6px; border: 1px solid rgba(52, 211, 153, 0.2);' if is_earth else
+                         'background: rgba(251, 191, 36, 0.08); border-radius: 6px; border: 1px solid rgba(251, 191, 36, 0.2);' if is_closest and not is_earth else ''}">
+                <span>{icon} {name}</span>
+                <span>{dist} AU</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Show detected planet marker
+        st.markdown(f"""
+        <div style="margin-top: 12px; display: flex; justify-content: space-between; padding: 8px;
+                    font-size: 0.85rem; font-weight: 700; color: #f87171;
+                    background: rgba(248, 113, 113, 0.1); border-radius: 8px; border: 1px solid rgba(248, 113, 113, 0.3);">
+            <span>🪐 Your Detected Planet</span>
+            <span>{semi_major_axis_au:.2f} AU</span>
+        </div>
+        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 8px; text-align: center;">
+            Closest Solar System analog: <strong style="color: #fbbf24;">{closest_planet[0]}</strong> ({closest_planet[1]} AU)
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
 
 # Top Clean Metric Cards
 c1, c2, c3, c4 = st.columns(4)
