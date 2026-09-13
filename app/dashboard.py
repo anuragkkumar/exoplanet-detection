@@ -383,7 +383,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 with tab1:
     st.markdown(f"#### Target Dataset: **{target_name}**")
     
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08,
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.12,
                         subplot_titles=("Normalized Stellar Brightness Time Series",
                                         "1D Grad-CAM Neural Attention Map (Transit Dip Importance)"))
 
@@ -399,11 +399,19 @@ with tab1:
                              line=dict(color='#fbbf24', width=2), fill='tozeroy', fillcolor='rgba(251, 191, 36, 0.18)'), row=2, col=1)
 
     fig.update_layout(
-        height=540,
+        height=570,
         paper_bgcolor='#0b0f17',
         plot_bgcolor='#111827',
         font=dict(color='#e2e8f0', family="Inter"),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        margin=dict(l=40, r=40, t=70, b=40),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.14,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=11, color='#94a3b8')
+        )
     )
     fig.update_xaxes(title_text="Timestep (Observations)", gridcolor='#1e293b', row=2, col=1)
     fig.update_yaxes(title_text="Normalized Flux", gridcolor='#1e293b', row=1, col=1)
@@ -454,7 +462,8 @@ with tab3:
     fig_phase.update_layout(
         title=f"Phase-Folded Light Curve (Period = {p_val:.1f} timesteps)",
         xaxis_title="Orbital Phase", yaxis_title="Normalized Flux",
-        paper_bgcolor='#0b0f17', plot_bgcolor='#111827', font=dict(color='#e2e8f0'), height=440
+        paper_bgcolor='#0b0f17', plot_bgcolor='#111827', font=dict(color='#e2e8f0'), height=440,
+        margin=dict(l=40, r=40, t=50, b=40)
     )
     st.plotly_chart(fig_phase, use_container_width=True)
 
