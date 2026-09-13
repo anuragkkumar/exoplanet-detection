@@ -252,6 +252,118 @@ def create_clean_confidence_gauge(prob_percent, threshold):
     return fig
 
 
+def create_solar_system_3d_figure(target_au, target_name, r_earth, orbit_angle_deg):
+    """
+    Renders an interactive 3D Solar System model with Sun, all 8 planets at stable real-order astronomical angles,
+    and the user's detected planet at its exact AU distance and dynamic orbital angle.
+    """
+    solar_planets = [
+        ("Sun", 0.0, 18, '#fbbf24', 0.0, '⭐ Central Star (Sun)'),
+        ("Mercury", 0.39, 6, '#94a3b8', 35.0, 'Mercury: 0.39 AU'),
+        ("Venus", 0.72, 8, '#fde68a', 115.0, 'Venus: 0.72 AU'),
+        ("Earth", 1.00, 9, '#38bdf8', 215.0, '🌍 Earth — YOU ARE HERE (1.00 AU)'),
+        ("Mars", 1.52, 7, '#f87171', 320.0, 'Mars: 1.52 AU'),
+        ("Jupiter", 5.20, 15, '#d4a574', 80.0, 'Jupiter: 5.20 AU'),
+        ("Saturn", 9.58, 13, '#fbbf24', 170.0, 'Saturn: 9.58 AU'),
+        ("Uranus", 19.18, 10, '#67e8f9', 260.0, 'Uranus: 19.18 AU'),
+        ("Neptune", 30.07, 10, '#818cf8', 340.0, 'Neptune: 30.07 AU'),
+    ]
+
+    def scale_dist(au):
+        if au <= 0:
+            return 0.0
+        return (au ** 0.52) * 3.2
+
+    fig = go.Figure()
+
+    # Draw planetary orbits
+    for name, au, _, _, _, _ in solar_planets:
+        if au > 0:
+            theta = np.linspace(0, 2 * np.pi, 120)
+            r = scale_dist(au)
+            is_earth = (name == "Earth")
+            orbit_color = 'rgba(56, 189, 248, 0.45)' if is_earth else 'rgba(100, 116, 139, 0.22)'
+            orbit_width = 2.5 if is_earth else 1
+            fig.add_trace(go.Scatter3d(
+                x=r * np.cos(theta), y=r * np.sin(theta), z=np.zeros_like(theta),
+                mode='lines',
+                line=dict(color=orbit_color, width=orbit_width),
+                showlegend=False, hoverinfo='none'
+            ))
+
+    # Draw solar system bodies
+    for name, au, sz, clr, fixed_deg, hover_label in solar_planets:
+        r = scale_dist(au)
+        rad = np.radians(fixed_deg)
+        x = r * np.cos(rad)
+        y = r * np.sin(rad)
+        
+        is_earth = (name == "Earth")
+        marker_dict = dict(size=sz, color=clr, opacity=0.95)
+        if is_earth:
+            marker_dict['line'] = dict(color='#34d399', width=3)
+            
+        fig.add_trace(go.Scatter3d(
+            x=[x], y=[y], z=[0],
+            mode='markers+text',
+            marker=marker_dict,
+            text=[f"{'🌍 ' if is_earth else ''}{name}"],
+            textposition='top center',
+            textfont=dict(size=11 if is_earth else 9, color='#34d399' if is_earth else '#94a3b8', family='Inter'),
+            name=f"{name} ({au:.2f} AU)" if au > 0 else "Sun",
+            hovertext=hover_label,
+            hoverinfo='text'
+        ))
+
+    # Draw detected candidate planet
+    det_r = scale_dist(target_au)
+    det_rad = np.radians(orbit_angle_deg)
+    det_x = det_r * np.cos(det_rad)
+    det_y = det_r * np.sin(det_rad)
+
+    # Detected planet orbit ring (highlighted red dashed)
+    theta_det = np.linspace(0, 2 * np.pi, 120)
+    fig.add_trace(go.Scatter3d(
+        x=det_r * np.cos(theta_det), y=det_r * np.sin(theta_det), z=np.zeros_like(theta_det),
+        mode='lines',
+        line=dict(color='#ef4444', width=3, dash='dash'),
+        showlegend=False, hoverinfo='none'
+    ))
+
+    # Detected planet marker
+    planet_marker_size = max(10, min(24, int(r_earth * 1.5)))
+    fig.add_trace(go.Scatter3d(
+        x=[det_x], y=[det_y], z=[0],
+        mode='markers+text',
+        marker=dict(size=planet_marker_size, color='#ef4444', opacity=1.0,
+                    line=dict(color='#ffffff', width=3)),
+        text=[f"🪐 YOUR PLANET ({target_au:.2f} AU)"],
+        textposition='top center',
+        textfont=dict(size=12, color='#fca5a5', family='Inter'),
+        name=f"Your Planet ({target_au:.2f} AU)",
+        hovertext=f"Detected Exoplanet: {target_name}<br>Distance: {target_au:.3f} AU (~{target_au * 149.6:.1f}M km)<br>Radius: {r_earth} R⊕",
+        hoverinfo='text'
+    ))
+
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(visible=False), yaxis=dict(visible=False), zaxis=dict(visible=False),
+            aspectmode='data', bgcolor='#0b0f17',
+            camera=dict(eye=dict(x=0.9, y=0.9, z=1.4))
+        ),
+        margin=dict(l=0, r=0, t=0, b=0),
+        height=520,
+        paper_bgcolor='#0b0f17',
+        legend=dict(
+            orientation="v", yanchor="top", y=0.95, xanchor="left", x=0.01,
+            font=dict(size=10, color='#94a3b8'), bgcolor='rgba(17,24,39,0.85)',
+            bordercolor='#1e293b', borderwidth=1
+        ),
+        showlegend=True
+    )
+    return fig
+
+
 model = load_trained_model()
 
 # Header Banner
@@ -348,168 +460,7 @@ esi_score = max(0.1, min(0.98, float(1.0 - 0.4 * abs(radius_analysis['planet_rad
 # 1D Grad-CAM Explainability Heatmap
 _, gradcam_heatmap = compute_gradcam1d(model, flux_proc)
 
-# Solar System Viewer (toggle via header button)
-if st.session_state.show_solar:
-    st.markdown("---")
-    st.markdown("### 🌌 Locate Your Detected Planet in the Solar System")
-
-    ss_col1, ss_col2 = st.columns([3, 1])
-
-    with ss_col1:
-        # Build our own 3D solar system with the detected planet
-        solar_data = [
-            ("Sun", 0, 18, '#fbbf24', '⭐'),
-            ("Mercury", 0.39, 5, '#94a3b8', ''),
-            ("Venus", 0.72, 7, '#fde68a', ''),
-            ("Earth", 1.00, 8, '#38bdf8', '🌍'),
-            ("Mars", 1.52, 6, '#f87171', ''),
-            ("Jupiter", 5.20, 14, '#d4a574', ''),
-            ("Saturn", 9.58, 12, '#fbbf24', ''),
-            ("Uranus", 19.18, 9, '#67e8f9', ''),
-            ("Neptune", 30.07, 9, '#818cf8', ''),
-        ]
-
-        # Scale distances for visualization (log-ish so inner planets are visible)
-        def scale_dist(au):
-            if au == 0:
-                return 0
-            return au ** 0.55 * 3
-
-        fig_ss = go.Figure()
-
-        # Add orbit rings
-        for name, au, sz, clr, _ in solar_data:
-            if au > 0:
-                theta = np.linspace(0, 2 * np.pi, 100)
-                r = scale_dist(au)
-                fig_ss.add_trace(go.Scatter3d(
-                    x=r * np.cos(theta), y=r * np.sin(theta),
-                    z=np.zeros(100), mode='lines',
-                    line=dict(color='rgba(100,116,139,0.25)', width=1),
-                    showlegend=False, hoverinfo='none'
-                ))
-
-        # Add planets
-        for name, au, sz, clr, emoji in solar_data:
-            r = scale_dist(au)
-            angle = np.random.uniform(0, 2 * np.pi) if au > 0 else 0
-            x = r * np.cos(angle)
-            y = r * np.sin(angle)
-            fig_ss.add_trace(go.Scatter3d(
-                x=[x], y=[y], z=[0],
-                mode='markers+text',
-                marker=dict(size=sz, color=clr, opacity=0.95),
-                text=[f"{emoji} {name}"], textposition='top center',
-                textfont=dict(size=9, color='#e2e8f0'),
-                name=f"{name} ({au} AU)",
-                hovertext=f"{name}: {au} AU from Sun",
-                hoverinfo='text'
-            ))
-
-        # ADD THE DETECTED PLANET — prominent red pulsing marker
-        det_r = scale_dist(semi_major_axis_au)
-        det_angle = np.pi * 0.75  # Place it at a visible angle
-        det_x = det_r * np.cos(det_angle)
-        det_y = det_r * np.sin(det_angle)
-
-        # Detected planet orbit ring (highlighted)
-        theta_det = np.linspace(0, 2 * np.pi, 100)
-        fig_ss.add_trace(go.Scatter3d(
-            x=det_r * np.cos(theta_det), y=det_r * np.sin(theta_det),
-            z=np.zeros(100), mode='lines',
-            line=dict(color='rgba(248, 113, 113, 0.5)', width=3, dash='dash'),
-            showlegend=False, hoverinfo='none'
-        ))
-
-        # Detected planet marker
-        fig_ss.add_trace(go.Scatter3d(
-            x=[det_x], y=[det_y], z=[0],
-            mode='markers+text',
-            marker=dict(size=16, color='#f87171', opacity=1,
-                        line=dict(color='#fef2f2', width=3)),
-            text=["🪐 YOUR PLANET"], textposition='top center',
-            textfont=dict(size=12, color='#f87171', family='Inter'),
-            name=f"Your Planet ({semi_major_axis_au:.2f} AU)",
-            hovertext=f"Detected Exoplanet: {semi_major_axis_au:.2f} AU | {radius_analysis['planet_radius_earth']} R⊕",
-            hoverinfo='text'
-        ))
-
-        fig_ss.update_layout(
-            scene=dict(
-                xaxis=dict(visible=False), yaxis=dict(visible=False), zaxis=dict(visible=False),
-                aspectmode='data', bgcolor='#0b0f17',
-                camera=dict(eye=dict(x=0.8, y=0.8, z=1.5))
-            ),
-            margin=dict(l=0, r=0, t=0, b=0),
-            height=520,
-            paper_bgcolor='#0b0f17',
-            legend=dict(
-                orientation="v", yanchor="top", y=0.95, xanchor="left", x=0.01,
-                font=dict(size=10, color='#94a3b8'), bgcolor='rgba(17,24,39,0.8)',
-                bordercolor='#1e293b', borderwidth=1
-            ),
-            showlegend=True
-        )
-        st.plotly_chart(fig_ss, use_container_width=True, config={'displaylogo': False})
-
-    with ss_col2:
-        solar_planets = [
-            ("Mercury", 0.39), ("Venus", 0.72), ("🌍 Earth — You Are Here", 1.00),
-            ("Mars", 1.52), ("Jupiter", 5.20), ("Saturn", 9.58),
-            ("Uranus", 19.18), ("Neptune", 30.07),
-        ]
-
-        st.markdown(f"""
-        <div class="clean-card">
-            <div class="card-title">YOUR PLANET'S LOCATION</div>
-            <hr style="border-color: #1e293b; margin: 8px 0 12px 0;">
-            <div style="font-size: 1.4rem; font-weight: 700; color: #38bdf8; margin-bottom: 4px;">
-                {semi_major_axis_au:.2f} AU from Host Star
-            </div>
-            <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 16px;">
-                (~{semi_major_axis_au * 149.6:.1f} million km)
-            </div>
-            <div class="card-title" style="margin-top: 12px;">DISTANCE COMPARISON</div>
-            <hr style="border-color: #1e293b; margin: 8px 0 12px 0;">
-        </div>
-        """, unsafe_allow_html=True)
-
-        closest_planet = min(solar_planets, key=lambda p: abs(p[1] - semi_major_axis_au))
-
-        for name, dist in solar_planets:
-            is_earth = "Earth" in name
-            is_closest = name == closest_planet[0]
-            if is_earth:
-                color, icon, weight = "#34d399", "🌍", "700"
-                bg = "background: rgba(52, 211, 153, 0.08); border-radius: 6px; border: 1px solid rgba(52, 211, 153, 0.2);"
-            elif is_closest and not is_earth:
-                color, icon, weight = "#fbbf24", "📍", "600"
-                bg = "background: rgba(251, 191, 36, 0.08); border-radius: 6px; border: 1px solid rgba(251, 191, 36, 0.2);"
-            else:
-                color, icon, weight = "#64748b", "○", "400"
-                bg = ""
-
-            st.markdown(f"""
-            <div style="display: flex; justify-content: space-between; padding: 4px 8px; font-size: 0.8rem;
-                        color: {color}; font-weight: {weight}; {bg}">
-                <span>{icon} {name}</span>
-                <span>{dist} AU</span>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown(f"""
-        <div style="margin-top: 12px; display: flex; justify-content: space-between; padding: 8px;
-                    font-size: 0.85rem; font-weight: 700; color: #f87171;
-                    background: rgba(248, 113, 113, 0.1); border-radius: 8px; border: 1px solid rgba(248, 113, 113, 0.3);">
-            <span>🪐 Your Detected Planet</span>
-            <span>{semi_major_axis_au:.2f} AU</span>
-        </div>
-        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 8px; text-align: center;">
-            Closest Solar System analog: <strong style="color: #fbbf24;">{closest_planet[0]}</strong> ({closest_planet[1]} AU)
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("---")
+# Top Clean Metric Cards
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
@@ -545,6 +496,120 @@ with c4:
         <div class="card-sub">Period: {bls_analysis['best_period']:.0f} steps (~{period_days:.1f}d)</div>
     </div>
     """, unsafe_allow_html=True)
+
+# Solar System Wide View (triggered by header button)
+if st.session_state.get('show_solar', False):
+    with st.container():
+        st.markdown("<div style='background: rgba(17, 24, 39, 0.9); border: 1px solid #1e293b; border-radius: 12px; padding: 20px; margin-top: 18px; margin-bottom: 24px;'>", unsafe_allow_html=True)
+        
+        top_c1, top_c2 = st.columns([5, 1])
+        with top_c1:
+            st.markdown("### 🌌 Solar System Wide View: Where Is Your Planet?")
+            st.caption(f"Comparing detected candidate **{target_name}** ({semi_major_axis_au:.2f} AU) with our Solar System scale.")
+        with top_c2:
+            if st.button("✕ Close View", key="close_solar_top_btn", use_container_width=True):
+                st.session_state.show_solar = False
+                st.rerun()
+
+        view_mode = st.radio(
+            "Visualization Mode:",
+            ["🛰️ 3D Planet Locator (Orbital Position & Scale)", "🌐 HuggingFace Interactive 3D Solar System (Wide View)"],
+            horizontal=True,
+            key="solar_view_mode_choice"
+        )
+
+        if view_mode == "🛰️ 3D Planet Locator (Orbital Position & Scale)":
+            ss_col1, ss_col2 = st.columns([3, 1])
+            
+            with ss_col1:
+                init_deg = int((bls_analysis.get('best_period', 50) * 19) % 360)
+                orbit_angle_slider = st.slider(
+                    "Rotate Candidate Planet Along Its Orbit",
+                    min_value=0, max_value=360, value=init_deg, step=5, format="%d°",
+                    help="Drag this slider to rotate your detected planet along its orbit path in 3D!"
+                )
+                fig_solar = create_solar_system_3d_figure(
+                    semi_major_axis_au, target_name,
+                    radius_analysis['planet_radius_earth'],
+                    orbit_angle_slider
+                )
+                st.plotly_chart(fig_solar, use_container_width=True, config={'displaylogo': False})
+
+            with ss_col2:
+                solar_ref_planets = [
+                    ("Mercury", 0.39),
+                    ("Venus", 0.72),
+                    ("🌍 Earth — YOU ARE HERE", 1.00),
+                    ("Mars", 1.52),
+                    ("Jupiter", 5.20),
+                    ("Saturn", 9.58),
+                    ("Uranus", 19.18),
+                    ("Neptune", 30.07),
+                ]
+                closest_analog = min(solar_ref_planets, key=lambda p: abs(p[1] - semi_major_axis_au))
+
+                st.markdown(f"""
+                <div class="clean-card">
+                    <div class="card-title">YOUR PLANET'S DISTANCE</div>
+                    <hr style="border-color: #1e293b; margin: 8px 0 12px 0;">
+                    <div style="font-size: 1.5rem; font-weight: 800; color: #38bdf8;">
+                        {semi_major_axis_au:.2f} AU
+                    </div>
+                    <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 2px; margin-bottom: 12px;">
+                        ~{semi_major_axis_au * 149.6:.1f} million km from host star
+                    </div>
+                    <div class="card-title">DISTANCE COMPARISON</div>
+                    <hr style="border-color: #1e293b; margin: 8px 0 12px 0;">
+                </div>
+                """, unsafe_allow_html=True)
+
+                for p_name, p_dist in solar_ref_planets:
+                    is_earth = "Earth" in p_name
+                    is_closest = (p_name == closest_analog[0])
+                    
+                    if is_earth:
+                        p_color, p_icon, p_weight = "#34d399", "🌍", "700"
+                        p_bg = "background: rgba(52, 211, 153, 0.12); border: 1px solid rgba(52, 211, 153, 0.35); border-radius: 6px;"
+                    elif is_closest and not is_earth:
+                        p_color, p_icon, p_weight = "#fbbf24", "📍", "600"
+                        p_bg = "background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 6px;"
+                    else:
+                        p_color, p_icon, p_weight = "#94a3b8", "○", "400"
+                        p_bg = "background: transparent;"
+
+                    st.markdown(f"""
+                    <div style="display: flex; justify-content: space-between; padding: 4px 8px; margin-bottom: 3px; font-size: 0.8rem;
+                                color: {p_color}; font-weight: {p_weight}; {p_bg}">
+                        <span>{p_icon} {p_name}</span>
+                        <span>{p_dist} AU</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                st.markdown(f"""
+                <div style="margin-top: 10px; display: flex; justify-content: space-between; padding: 8px 10px;
+                            font-size: 0.85rem; font-weight: 700; color: #f87171;
+                            background: rgba(239, 68, 68, 0.15); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.4);">
+                    <span>🪐 Your Detected Planet</span>
+                    <span>{semi_major_axis_au:.2f} AU</span>
+                </div>
+                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 8px; text-align: center;">
+                    Closest Solar Analog: <strong style="color: #fbbf24;">{closest_analog[0]}</strong> ({closest_analog[1]} AU)
+                </div>
+                """, unsafe_allow_html=True)
+
+        else:
+            st.markdown("<p style='color: #94a3b8; font-size: 0.85rem;'>Explore the full interactive 3D WebGL solar system model below. Drag with mouse to rotate, scroll to zoom in/out.</p>", unsafe_allow_html=True)
+            st.components.v1.iframe(
+                "https://dasdfdsfasdfs-interactive-3d-solar-system.static.hf.space",
+                height=540,
+                scrolling=False
+            )
+
+        st.markdown("<div style='text-align: right; margin-top: 14px;'>", unsafe_allow_html=True)
+        if st.button("✕ Close Solar System View", key="close_solar_bottom_btn"):
+            st.session_state.show_solar = False
+            st.rerun()
+        st.markdown("</div></div>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
