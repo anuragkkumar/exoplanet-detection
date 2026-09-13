@@ -337,7 +337,7 @@ c1, c2, c3, c4 = st.columns(4)
 
 with c1:
     gauge_fig = create_clean_confidence_gauge(round(pred_prob * 100, 1), threshold)
-    st.plotly_chart(gauge_fig, use_container_width=True, config={'displayModeBar': False})
+    st.plotly_chart(gauge_fig, use_container_width=True, config={'displaylogo': False})
 
 with c2:
     status_html = '<span class="status-badge-planet">Confirmed Planet Candidate 🪐</span>' if is_planet else '<span class="status-badge-noplanet">No Planet Signal ❌</span>'
@@ -403,7 +403,7 @@ with tab1:
         paper_bgcolor='#0b0f17',
         plot_bgcolor='#111827',
         font=dict(color='#e2e8f0', family="Inter"),
-        margin=dict(l=50, r=30, t=40, b=75),
+        margin=dict(l=50, r=30, t=50, b=75),
         legend=dict(
             orientation="h",
             yanchor="top",
@@ -417,7 +417,7 @@ with tab1:
     fig.update_yaxes(title_text="Normalized Flux", gridcolor='#1e293b', row=1, col=1)
     fig.update_yaxes(title_text="Attention Score", gridcolor='#1e293b', row=2, col=1)
 
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    st.plotly_chart(fig, use_container_width=True, config={'displaylogo': False})
 
 with tab2:
     st.markdown("#### 🛸 3D Orbital Simulation & Physical Telemetry")
@@ -426,7 +426,7 @@ with tab2:
     
     with col_3d:
         fig3d = create_3d_orbit_figure(radius_analysis['planet_radius_earth'], bls_analysis['best_period'])
-        st.plotly_chart(fig3d, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig3d, use_container_width=True, config={'displaylogo': False})
 
     with col_info:
         st.markdown(f"""
@@ -465,7 +465,7 @@ with tab3:
         paper_bgcolor='#0b0f17', plot_bgcolor='#111827', font=dict(color='#e2e8f0'), height=440,
         margin=dict(l=40, r=40, t=50, b=40)
     )
-    st.plotly_chart(fig_phase, use_container_width=True, config={'displayModeBar': False})
+    st.plotly_chart(fig_phase, use_container_width=True, config={'displaylogo': False})
 
 with tab4:
     st.markdown("#### 🔊 Light Curve Audio Sonification")
