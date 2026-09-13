@@ -38,28 +38,14 @@ st.html("""<style>
 
 .stApp {
     background-color: #0b0f17;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #e2e8f0;
-    position: relative;
-}
-
-.stApp::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
     background-image: 
-        radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.08) 0%, transparent 45%),
-        radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 50% 30%, rgba(11, 15, 23, 0.88) 0%, #0b0f17 100%),
         url("https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=2000&auto=format&fit=crop");
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0.14;
-    pointer-events: none;
-    z-index: 0;
+    background-attachment: fixed;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #e2e8f0;
 }
 
 .header-title {
