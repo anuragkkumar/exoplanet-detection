@@ -32,7 +32,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Premium Clean Human-Designed Minimalist UI Styling (Inter / Apple System Font)
+# Premium Clean Human-Designed Minimalist UI Styling
 st.html("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -42,7 +42,6 @@ st.html("""<style>
     color: #e2e8f0;
 }
 
-/* Premium Minimalist Title */
 .header-title {
     font-size: 2.1rem;
     font-weight: 800;
@@ -73,7 +72,6 @@ st.html("""<style>
     border-radius: 6px;
 }
 
-/* Premium Clean Metric Cards */
 .clean-card {
     background: #111827;
     border: 1px solid #1e293b;
@@ -104,7 +102,6 @@ st.html("""<style>
     margin-top: 4px;
 }
 
-/* Status Badges */
 .status-badge-planet {
     background: rgba(16, 185, 129, 0.12);
     border: 1px solid #10b981;
@@ -218,16 +215,18 @@ def create_3d_orbit_figure(r_earth, period_steps):
     return fig3d
 
 
-def create_clean_confidence_gauge(prob_percent):
+def create_clean_confidence_gauge(prob_percent, threshold):
+    """Creates a Radial Gauge Dial with Title cleanly inside the Plotly Card."""
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=prob_percent,
-        domain={'x': [0, 1], 'y': [0, 1]},
-        number={'suffix': "%", 'font': {'color': '#f8fafc', 'family': 'Inter', 'size': 30, 'weight': 'bold'}},
+        domain={'x': [0.1, 0.9], 'y': [0.05, 0.75]},
+        title={'text': "MODEL CONFIDENCE GAUGE", 'font': {'size': 11, 'color': '#94a3b8', 'family': 'Inter', 'weight': 'bold'}},
+        number={'suffix': "%", 'font': {'color': '#f8fafc', 'family': 'Inter', 'size': 26, 'weight': 'bold'}},
         gauge={
             'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#475569"},
             'bar': {'color': "#38bdf8"},
-            'bgcolor': "rgba(30, 41, 59, 0.4)",
+            'bgcolor': "rgba(30, 41, 59, 0.3)",
             'bordercolor': "#334155",
             'steps': [
                 {'range': [0, 30], 'color': 'rgba(100, 116, 139, 0.15)'},
@@ -237,10 +236,10 @@ def create_clean_confidence_gauge(prob_percent):
         }
     ))
     fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        height=170,
-        margin=dict(l=15, r=15, t=15, b=15)
+        paper_bgcolor='#111827',
+        plot_bgcolor='#111827',
+        height=175,
+        margin=dict(l=10, r=10, t=25, b=10)
     )
     return fig
 
@@ -337,8 +336,7 @@ _, gradcam_heatmap = compute_gradcam1d(model, flux_proc)
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
-    st.markdown("""<div class="clean-card"><div class="card-title">Model Confidence Gauge</div></div>""", unsafe_allow_html=True)
-    gauge_fig = create_clean_confidence_gauge(round(pred_prob * 100, 1))
+    gauge_fig = create_clean_confidence_gauge(round(pred_prob * 100, 1), threshold)
     st.plotly_chart(gauge_fig, use_container_width=True)
 
 with c2:
@@ -409,7 +407,7 @@ with tab1:
     )
     fig.update_xaxes(title_text="Timestep (Observations)", gridcolor='#1e293b', row=2, col=1)
     fig.update_yaxes(title_text="Normalized Flux", gridcolor='#1e293b', row=1, col=1)
-    fig.update_yaxes(title_text="Attention Weight", gridcolor='#1e293b', row=2, col=1)
+    fig.update_yaxes(title_text="Attention Score", gridcolor='#1e293b', row=2, col=1)
 
     st.plotly_chart(fig, use_container_width=True)
 
