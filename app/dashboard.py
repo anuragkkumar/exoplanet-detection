@@ -39,8 +39,8 @@ st.html("""<style>
 .stApp {
     background-color: #0b0f17;
     background-image: 
-        radial-gradient(circle at 50% 30%, rgba(11, 15, 23, 0.88) 0%, #0b0f17 100%),
-        url("https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=2000&auto=format&fit=crop");
+        radial-gradient(circle at 50% 30%, rgba(11, 15, 23, 0.82) 0%, rgba(11, 15, 23, 0.95) 100%),
+        url("https://images.unsplash.com/photo-1545156521-77bd85671d30?q=80&w=2560&auto=format&fit=crop");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
