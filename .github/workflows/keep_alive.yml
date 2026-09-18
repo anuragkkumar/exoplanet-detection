@@ -1,0 +1,19 @@
+﻿name: Keep App Alive 24/7
+
+on:
+  schedule:
+    # Runs every 12 hours (00:00 and 12:00 UTC)
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Streamlit Cloud & Hugging Face
+        run: |
+          echo "Pinging Streamlit Cloud..."
+          curl -s -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" "https://exoplanet-detection-sqgdixxcb8wsxhvrxsqwwh.streamlit.app" > /dev/null || true
+          echo "Pinging Hugging Face Space..."
+          curl -s -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" "https://huggingface.co/spaces/anuragkkumar/exoplanet-detection" > /dev/null || true
+          echo "Keep-alive ping completed successfully at $(date -u)"
