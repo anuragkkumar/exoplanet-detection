@@ -89,12 +89,15 @@ st.html("""<style>
 }
 
 .card-title {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
     color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .card-val {
@@ -467,7 +470,7 @@ def create_alien_star_system_2d_figure(target_au, target_name, r_earth, eq_temp,
 model = load_trained_model()
 
 # Header Banner
-hdr_left, hdr_right = st.columns([4, 1])
+hdr_left, hdr_right = st.columns([3, 1.2])
 with hdr_left:
     st.markdown('<div class="header-title">🪐 Exoplanet Transit Detection Engine</div>', unsafe_allow_html=True)
     st.markdown('<div class="header-sub">Deep Learning Signal Analysis for NASA Kepler &amp; TESS Photometric Datasets</div>', unsafe_allow_html=True)
@@ -482,7 +485,7 @@ with hdr_left:
 with hdr_right:
     if 'show_solar' not in st.session_state:
         st.session_state.show_solar = False
-    if st.button("🌌 Compare Planetary Systems" if not st.session_state.show_solar else "✕ Close Systems View", use_container_width=True):
+    if st.button("🌌 Compare Systems" if not st.session_state.show_solar else "✕ Close Systems", use_container_width=True):
         st.session_state.show_solar = not st.session_state.show_solar
         st.rerun()
 
