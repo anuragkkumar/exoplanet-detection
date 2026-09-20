@@ -29,51 +29,45 @@ Addressing the severe **1:100 astronomical class imbalance**, the engine deliver
 ## 🏛️ System Architecture
 
 ```mermaid
-flowchart TD
-    subgraph Ingestion["1. Multi-Mission Data Ingestion"]
-        A1["NASA Kepler Space Telescope (3,197 Steps)"]
-        A2["NASA TESS Mission (Photometric Cadence)"]
-        A3["Live NASA MAST Archive Query via Lightkurve"]
-        A4["Custom Light Curve Upload (CSV/TXT)"]
+flowchart LR
+    subgraph S1["1. Data Ingestion"]
+        direction TB
+        A1["🛰️ NASA Kepler Data<br/>(3,197 Flux Points)"]
+        A2["🔭 NASA TESS Mission<br/>(Time-Series Flux)"]
+        A3["📡 Live MAST Archive<br/>(Lightkurve Queries)"]
     end
 
-    subgraph SignalProcessing["2. Astronomical Signal Processing"]
-        B1["Z-Score Per-Star Normalization (z = [x - μ] / σ)"]
-        B2["1D Gaussian Smoothing Filter (σ = 1.0)"]
-        B3["Box-Fitting Least Squares (BLS Period Search)"]
-        B4["Phase-Folding Engine (φ ∈ [-0.5, 0.5])"]
-        B5["Hybrid SMOTE (Balances 1:100 Imbalance)"]
+    subgraph S2["2. Signal Preprocessing"]
+        direction TB
+        B1["📊 Z-Score Normalization<br/>& Outlier Filtering"]
+        B2["📈 1D Gaussian Smoothing<br/>(Noise Suppression)"]
+        B3["⏱️ BLS Period Search<br/>& Phase-Folding"]
+        B4["⚖️ SMOTE Resampling<br/>(1:100 Imbalance Fix)"]
     end
 
-    subgraph DeepLearning["3. Deep Learning & Explainable AI (XAI)"]
-        C1["Input Tensor: 1D Normalized Flux Vector (1 × 3197)"]
-        C2["1D-ResNet Blocks (Residual Skip Connections)"]
-        C3["Multi-Scale Conv1D + Max-Pooling Regularization"]
-        C4["Global Average Pooling & Dense Softmax Head"]
-        C5["Calibrated Decision Boundary (τ = 0.30 → 100% Recall)"]
-        C6["1D Grad-CAM Saliency Engine (Transit Localization)"]
+    subgraph S3["3. Deep Learning & XAI"]
+        direction TB
+        C1["🧠 1D-ResNet Model<br/>(Residual Skip Links)"]
+        C2["🎯 Threshold Calibration<br/>(τ = 0.30 → 100% Recall)"]
+        C3["🔥 1D Grad-CAM Heatmaps<br/>(Transit Localization)"]
     end
 
-    subgraph Physics["4. Physical Telemetry & Astrobiology"]
-        D1["Transit Depth (δ) → Planet Radius (Rp = R* √δ)"]
-        D2["Kepler's 3rd Law → Semi-Major Axis (a)"]
-        D3["Radiative Equilibrium Temperature (Teq)"]
-        D4["Circumstellar Habitable Zone Classification"]
+    subgraph S4["4. Physical Telemetry"]
+        direction TB
+        D1["🪐 Planet Radius (Rp)<br/>from Transit Depth δ"]
+        D2["📐 Semi-Major Axis (a)<br/>via Kepler's 3rd Law"]
+        D3["🌡️ Equilibrium Temp (Teq)<br/>& Habitable Zone Check"]
     end
 
-    subgraph Serving["5. Production Serving & User Interfaces"]
-        E1["Interactive Streamlit Web Dashboard (5 Core Tabs)"]
-        E2["3D Keplerian Orbit Simulation (Plotly 3D)"]
-        E3["Acoustic Light Curve Sonification (WAV Synthesis)"]
-        E4["FastAPI REST Microservice (/predict & /health)"]
-        E5["24/7 CI/CD Keep-Alive Runner (GitHub Actions)"]
+    subgraph S5["5. Serving & UI"]
+        direction TB
+        E1["💻 Streamlit Web App<br/>(5 Dedicated Tabs)"]
+        E2["🛸 3D Orbit Simulation<br/>(Plotly 3D Interactive)"]
+        E3["🔊 Audio Sonification<br/>(Hear Planetary Transits)"]
+        E4["⚡ FastAPI Microservice<br/>& 24/7 CI/CD Keep-Alive"]
     end
 
-    Ingestion --> SignalProcessing
-    SignalProcessing --> DeepLearning
-    DeepLearning --> Physics
-    DeepLearning --> Serving
-    Physics --> Serving
+    S1 ==> S2 ==> S3 ==> S4 ==> S5
 ```
 
 ---
