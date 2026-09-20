@@ -23,7 +23,7 @@ license: mit
 
 An end-to-end, production-grade AI platform developed for the **ISRO Bharatiya Antariksh Hackathon (BAH) 2026** to detect exoplanet transit signatures from noisy stellar photometric time-series data.
 
-Featuring **1D Deep Convolutional Neural Networks**, **1D Residual Networks (ResNet1D)**, **1D Grad-CAM Explainable AI Heatmaps**, **Box-Fitting Least Squares (BLS)** period searching, **Live NASA MAST Archive Queries**, **Audio Sonification**, an interactive **Planetary Systems Explorer**, and a production **FastAPI REST API**.
+Featuring **1D Deep Convolutional Neural Networks**, **1D Residual Networks (ResNet1D)**, **1D Grad-CAM Explainable AI Heatmaps**, **Box-Fitting Least Squares (BLS)** period searching, **Live NASA MAST Archive Queries**, **Audio Sonification**, an interactive **3D Kepler Orbit Simulation**, and a production **FastAPI REST API**.
 
 ---
 
@@ -67,10 +67,10 @@ Featuring **1D Deep Convolutional Neural Networks**, **1D Residual Networks (Res
 * **Earth Similarity Index (ESI)**: Geometric mean assessing radius and surface temperature resemblance to Earth:
   $$\text{ESI} = 1 - 0.4 \cdot \frac{|R_p - 1|}{R_p + 1} - 0.5 \cdot \frac{|T_{eq} - 288|}{T_{eq} + 288}$$
 
-### 4. Lightweight 2D Planetary Systems Explorer
-* **🌌 Our Solar System**: Complete 2D orbital map with Sun and all 8 planets (Mercury, Venus, Earth with `🌍 Earth — YOU ARE HERE (1.00 AU)`, Mars, Jupiter, Saturn, Uranus, Neptune) at exact AU distances.
-* **🪐 Alien Star System**: Maps the detected candidate in its own independent star system in deep space (~650 light-years away) alongside companion planets and the **Habitable (Goldilocks) Zone** ($0.75-1.45 \text{ AU}$).
-* **⚖️ Side-by-Side Comparison**: Direct architectural comparison table contrasting Our Solar System against the alien exoplanetary system.
+### 4. Interactive 3D Keplerian Orbit Simulation
+* **Orbital Mechanics Visualization**: Real-time 3D orbital trajectory rendering of the detected exoplanetary candidate around its host star using Plotly 3D scatter traces.
+* **Astrophysical Physical Parameters**: Granular physical telemetry calculating semi-major axis ($a$), orbital period ($P$), transit duration, and equilibrium temperature.
+* **Habitable Zone Assessment**: Integrated calculation determining if candidate world orbits within the liquid-water circumstellar habitable zone.
 
 ### 5. Multi-Source Ingestion & Audio Sonification
 * **Live NASA MAST Integration**: Real-time queries via `lightkurve` for Kepler, K2, and TESS targets (e.g., `KIC 10593626` / Kepler-22b).
