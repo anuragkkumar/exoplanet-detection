@@ -28,47 +28,34 @@ Addressing the severe **1:100 astronomical class imbalance**, the engine deliver
 
 ## 🏛️ System Architecture
 
-```mermaid
-flowchart LR
-    subgraph S1["1. Data Ingestion"]
-        direction TB
-        A1["🛰️ NASA Kepler Data<br/>(3,197 Flux Points)"]
-        A2["🔭 NASA TESS Mission<br/>(Time-Series Flux)"]
-        A3["📡 Live MAST Archive<br/>(Lightkurve Queries)"]
-    end
-
-    subgraph S2["2. Signal Preprocessing"]
-        direction TB
-        B1["📊 Z-Score Normalization<br/>& Outlier Filtering"]
-        B2["📈 1D Gaussian Smoothing<br/>(Noise Suppression)"]
-        B3["⏱️ BLS Period Search<br/>& Phase-Folding"]
-        B4["⚖️ SMOTE Resampling<br/>(1:100 Imbalance Fix)"]
-    end
-
-    subgraph S3["3. Deep Learning & XAI"]
-        direction TB
-        C1["🧠 1D-ResNet Model<br/>(Residual Skip Links)"]
-        C2["🎯 Threshold Calibration<br/>(τ = 0.30 → 100% Recall)"]
-        C3["🔥 1D Grad-CAM Heatmaps<br/>(Transit Localization)"]
-    end
-
-    subgraph S4["4. Physical Telemetry"]
-        direction TB
-        D1["🪐 Planet Radius (Rp)<br/>from Transit Depth δ"]
-        D2["📐 Semi-Major Axis (a)<br/>via Kepler's 3rd Law"]
-        D3["🌡️ Equilibrium Temp (Teq)<br/>& Habitable Zone Check"]
-    end
-
-    subgraph S5["5. Serving & UI"]
-        direction TB
-        E1["💻 Streamlit Web App<br/>(5 Dedicated Tabs)"]
-        E2["🛸 3D Orbit Simulation<br/>(Plotly 3D Interactive)"]
-        E3["🔊 Audio Sonification<br/>(Hear Planetary Transits)"]
-        E4["⚡ FastAPI Microservice<br/>& 24/7 CI/CD Keep-Alive"]
-    end
-
-    S1 ==> S2 ==> S3 ==> S4 ==> S5
 ```
+┌───────────────────────────┐      ┌───────────────────────────┐      ┌───────────────────────────┐
+│   1. MULTI-MISSION DATA   │      │   2. SIGNAL PREPROCESSING │      │   3. DEEP LEARNING & XAI  │
+├───────────────────────────┤      ├───────────────────────────┤      ├───────────────────────────┤
+│ • NASA Kepler (3,197 pts) │ ───▶ │ • Per-Star Z-Score Norm   │ ───▶ │ • 1D-ResNet + Skip Links  │
+│ • NASA TESS Photometry    │      │ • 1D Gaussian Filter σ=1  │      │ • Calibrated Threshold    │
+│ • Live MAST (Lightkurve)  │      │ • BLS Periodogram Search  │      │ • 100% Recall (0 Missed)  │
+│ • Custom CSV/TXT Uploads  │      │ • Hybrid SMOTE (1:100)    │      │ • 1D Grad-CAM Saliency    │
+└───────────────────────────┘      └───────────────────────────┘      └───────────────────────────┘
+                                                                                    │
+                                                                                    ▼
+┌───────────────────────────┐      ┌───────────────────────────┐      ┌───────────────────────────┐
+│   5. PRODUCTION SERVING   │      │   INTERACTIVE FEATURES    │      │   4. PHYSICAL TELEMETRY   │
+├───────────────────────────┤      ├───────────────────────────┤      ├───────────────────────────┤
+│ • Streamlit Web Dashboard │ ◀─── │ • 3D Orbit Simulation     │ ◀─── │ • Planet Radius Rp = R*√δ │
+│ • FastAPI REST Service    │      │ • Audio Sonification      │      │ • Semi-Major Axis (AU)    │
+│ • 24/7 CI/CD Keep-Alive   │      │ • Phase Folding (φ)       │      │ • Equilibrium Temp (Teq)  │
+│ • Docker Container        │      │ • Model Telemetry & ROC   │      │ • Habitable Zone Check    │
+└───────────────────────────┘      └───────────────────────────┘      └───────────────────────────┘
+```
+
+| Pipeline Stage | Engine / Methods | Role & Operations | Key Outputs |
+| :--- | :--- | :--- | :--- |
+| **1. Data Ingestion** | Kepler, TESS, MAST API | Multi-mission spaceborne photometric retrieval | 3,197-step flux sequences |
+| **2. Signal Processing** | SciPy, BLS, SMOTE | Z-score normalization, Gaussian noise filter, phase folding | Cleaned, balanced time-series |
+| **3. Deep Learning** | 1D-ResNet, Grad-CAM | Feature extraction with residual skip connections | Transit probability & attention maps |
+| **4. Physical Telemetry**| Kepler's 3rd Law, Stefan-Boltzmann | Transit depth & orbital mechanics modeling | Radius ($R_p$), AU distance, $T_{eq}$ |
+| **5. Production Serving**| Streamlit, FastAPI, Plotly 3D | Web platform, 3D orbit simulation & REST endpoints | Real-time interactive telemetry |
 
 ---
 
