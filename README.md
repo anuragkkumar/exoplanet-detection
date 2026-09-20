@@ -26,6 +26,58 @@ Addressing the severe **1:100 astronomical class imbalance**, the engine deliver
 
 ---
 
+## 🏛️ System Architecture
+
+```mermaid
+flowchart TD
+    subgraph Ingestion["1. Multi-Mission Data Ingestion"]
+        A1["NASA Kepler Space Telescope (3,197 Steps)"]
+        A2["NASA TESS Mission (Photometric Cadence)"]
+        A3["Live NASA MAST Archive Query via Lightkurve"]
+        A4["Custom Light Curve Upload (CSV/TXT)"]
+    end
+
+    subgraph SignalProcessing["2. Astronomical Signal Processing"]
+        B1["Z-Score Per-Star Normalization (z = [x - μ] / σ)"]
+        B2["1D Gaussian Smoothing Filter (σ = 1.0)"]
+        B3["Box-Fitting Least Squares (BLS Period Search)"]
+        B4["Phase-Folding Engine (φ ∈ [-0.5, 0.5])"]
+        B5["Hybrid SMOTE (Balances 1:100 Imbalance)"]
+    end
+
+    subgraph DeepLearning["3. Deep Learning & Explainable AI (XAI)"]
+        C1["Input Tensor: 1D Normalized Flux Vector (1 × 3197)"]
+        C2["1D-ResNet Blocks (Residual Skip Connections)"]
+        C3["Multi-Scale Conv1D + Max-Pooling Regularization"]
+        C4["Global Average Pooling & Dense Softmax Head"]
+        C5["Calibrated Decision Boundary (τ = 0.30 → 100% Recall)"]
+        C6["1D Grad-CAM Saliency Engine (Transit Localization)"]
+    end
+
+    subgraph Physics["4. Physical Telemetry & Astrobiology"]
+        D1["Transit Depth (δ) → Planet Radius (Rp = R* √δ)"]
+        D2["Kepler's 3rd Law → Semi-Major Axis (a)"]
+        D3["Radiative Equilibrium Temperature (Teq)"]
+        D4["Circumstellar Habitable Zone Classification"]
+    end
+
+    subgraph Serving["5. Production Serving & User Interfaces"]
+        E1["Interactive Streamlit Web Dashboard (5 Core Tabs)"]
+        E2["3D Keplerian Orbit Simulation (Plotly 3D)"]
+        E3["Acoustic Light Curve Sonification (WAV Synthesis)"]
+        E4["FastAPI REST Microservice (/predict & /health)"]
+        E5["24/7 CI/CD Keep-Alive Runner (GitHub Actions)"]
+    end
+
+    Ingestion --> SignalProcessing
+    SignalProcessing --> DeepLearning
+    DeepLearning --> Physics
+    DeepLearning --> Serving
+    Physics --> Serving
+```
+
+---
+
 ## 💎 Key Highlights at a Glance
 
 | Feature | Description | Impact / Metric |
