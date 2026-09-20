@@ -24,7 +24,7 @@ license: mit
 [![Uptime: 24/7](https://img.shields.io/badge/Uptime-100%25%20(24%2F7)-brightgreen)](https://exoplanet-detection-sqgdixxcb8wsxhvrxsqwwh.streamlit.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**[🚀 Launch Live Web App](https://exoplanet-detection-sqgdixxcb8wsxhvrxsqwwh.streamlit.app)** • **[🤗 Hugging Face Space](https://huggingface.co/spaces/anuragkkumar/exoplanet-detection)** • **[⚡ Interactive API Docs](https://exoplanet-detection-sqgdixxcb8wsxhvrxsqwwh.streamlit.app)** • **[📄 Resume Summary](#-resume-bullet-ready-to-use)**
+**[🚀 Launch Live Web App](https://exoplanet-detection-sqgdixxcb8wsxhvrxsqwwh.streamlit.app)** • **[🤗 Hugging Face Space](https://huggingface.co/spaces/anuragkkumar/exoplanet-detection)** • **[⚡ Interactive API Docs](https://exoplanet-detection-sqgdixxcb8wsxhvrxsqwwh.streamlit.app)**
 
 </div>
 
@@ -153,21 +153,6 @@ uvicorn app.main:app --reload --port 8000
 ```
 *API documentation available at `http://localhost:8000/docs`.*
 
----
-
-## 💼 Resume Bullet (Ready to Use)
-
-```markdown
-Machine Learning Engineer | Exoplanet Transit Detection System | Jan 2024 – Present
-Deep Learning Photometric Signal Analysis: Intelligent transit detection system processing NASA Kepler & TESS data.
-• Model Architecture: Designed a 1D-ResNet classifier for 3,197-step light curve sequences to identify exoplanet transit signatures.
-• Imbalance & Recall: Addressed 1:100 class imbalance via SMOTE, achieving 100% recall and 0.98 ROC-AUC at 0.30 decision threshold.
-• Explainable AI (XAI): Implemented 1D Grad-CAM to localize transit ingress/egress dips and visually explain model decisions.
-• Astrophysical Analytics: Built automated BLS periodogram and orbital mechanics pipelines to compute planetary radius and semi-major axis.
-• Deployment & Uptime: Deployed interactive dashboard with 3D orbit simulation and CI/CD keep-alive runners ensuring 99.9% uptime.
-• Tools/technologies: Python, PyTorch, NumPy, SciPy, Lightkurve, Astropy, Scikit-learn, Plotly, Streamlit, GitHub Actions.
-(Live: https://exoplanet-detection-sqgdixxcb8wsxhvrxsqwwh.streamlit.app | Code: https://github.com/anuragkkumar/exoplanet-detection)
-```
 
 ---
 
